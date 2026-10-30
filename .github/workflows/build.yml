@@ -1,35 +1,21 @@
-name: Build libcheat.dylib
-
+name: build-dylib
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
-
+  push:
 jobs:
   build:
     runs-on: macos-latest
-    timeout-minutes: 20 # Если за 20 минут не соберется - отменится сама
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Show Xcode version
-        run: xcodebuild -version
-
-      - name: Build libcheat.dylib
-        run: bash scripts/build.sh
-
-      - name: Verify dylib
+      - uses: actions/checkout@v4
+      - name: Build menu.dylib
         run: |
-          echo "=== file ==="
-          file build/libcheat.dylib
-          echo "=== linked libraries ==="
-          otool -L build/libcheat.dylib
-          echo "=== LC_ID_DYLIB ==="
-          otool -l build/libcheat.dylib | grep -A2 LC_ID_DYLIB
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+          xcrun -sdk iphoneos clang++ -arch arm64 -std=c++17 -fobjc-arc \
+            -miphoneos-version-min=14.0 -dynamiclib \
+            -framework UIKit -framework Foundation \
+            -install_name @rpath/menu.dylib \
+            -o menu.dylib Tweak.mm
+          file menu.dylib
+      - uses: actions/upload-artifact@v4
         with:
-          name: libcheat-dylib
-          path: build/libcheat.dylib
+          name: menu
+          path: menu.dylib
