@@ -16,29 +16,6 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Clone Dobby
-        run: |
-          git clone --depth 1 --recursive https://github.com/jmpews/Dobby.git third_party/dobby
-
-      - name: Build Dobby for iOS arm64
-        run: |
-          cd third_party/dobby
-          mkdir -p build_for_ios_arm64 && cd build_for_ios_arm64
-          
-          # Используем полный набор флагов из официальной документации Dobby
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_SYSTEM_NAME=iOS \
-            -DCMAKE_OSX_ARCHITECTURES=arm64 \
-            -DCMAKE_SYSTEM_PROCESSOR=arm64 \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
-            -DDOBBY_GENERATE_SHARED=OFF
-          
-          make -j$(sysctl -n hw.ncpu)
-          
-          echo "=== Built artifacts ==="
-          find . -name "*.a" -exec lipo -info {} \;
-
       - name: Build libcheat.dylib
         run: bash scripts/build.sh
 
