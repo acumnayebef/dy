@@ -1,0 +1,48 @@
+name: Build libcheat
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build libcheat.dylib
+        run: |
+          xcrun --sdk iphoneos clang++ \
+            -arch arm64 \
+            -miphoneos-version-min=14.0 \
+            -isysroot "$(xcrun --sdk iphoneos --show-sdk-path)" \
+            -dynamiclib \
+            -fobjc-arc \
+            -O2 \
+            -framework Foundation \
+            -framework UIKit \
+            -framework QuartzCore \
+            -install_name @executable_path/Frameworks/libcheat.dylib \
+            -o libcheat.dylib \
+            tweak.mm
+
+      - name: Strip and ad-hoc sign
+        run: |
+          strip -x libcheat.dylib
+          codesign -f -s - libcheat.dylib
+
+      - name: Verify
+        run: |
+          file libcheat.dylib
+          lipo -info libcheat.dylib
+          otool -L libcheat.dylib
+          lipo -info libcheat.dylib | grep -q arm64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libcheat
+          path: libcheat.dylib
